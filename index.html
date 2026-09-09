@@ -1,0 +1,3082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Silent Sync 🎮</title>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    min-height:100vh;
+    color:white;
+
+    background:
+    radial-gradient(circle at 10% 10%,#063c4c,transparent 30%),
+    radial-gradient(circle at 90% 90%,#2c104e,transparent 35%),
+    #030712;
+}
+
+.container{
+    max-width:1250px;
+    margin:auto;
+    padding:20px;
+}
+
+/* HEADER */
+
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:18px 25px;
+
+    border:1px solid #174967;
+    border-radius:20px;
+
+    background:#071329ee;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.logoIcon{
+    width:50px;
+    height:50px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:15px;
+
+    border:1px solid #00ffff;
+
+    font-size:27px;
+}
+
+.logo h1{
+    font-size:20px;
+    letter-spacing:3px;
+}
+
+.logo p{
+    color:#7183a3;
+    font-size:9px;
+    letter-spacing:2px;
+    margin-top:4px;
+}
+
+.stats{
+    display:flex;
+    gap:10px;
+}
+
+.stat{
+    padding:10px 15px;
+
+    border-radius:14px;
+
+    background:#0b1832;
+
+    border:1px solid #203d65;
+
+    text-align:center;
+}
+
+.stat small{
+    display:block;
+    color:#7184a5;
+    font-size:9px;
+}
+
+.stat strong{
+    color:#00ffff;
+}
+
+/* SCREENS */
+
+.screen{
+    display:none;
+    margin-top:30px;
+}
+
+.screen.active{
+    display:block;
+}
+
+/* TITLE */
+
+.title{
+    text-align:center;
+    margin:25px 0;
+}
+
+.title h2{
+    font-size:40px;
+
+    background:
+    linear-gradient(
+        90deg,
+        #00ffff,
+        #7d4cff,
+        #ff35e9
+    );
+
+    -webkit-background-clip:text;
+    color:transparent;
+}
+
+.title p{
+    color:#8192af;
+    margin-top:8px;
+}
+
+/* LEVELS */
+
+.levelGrid{
+    max-width:1050px;
+    margin:auto;
+
+    display:grid;
+    grid-template-columns:
+    repeat(5,1fr);
+
+    gap:15px;
+}
+
+.level{
+    padding:25px 15px;
+
+    min-height:180px;
+
+    text-align:center;
+
+    border-radius:20px;
+
+    background:#08142c;
+
+    border:1px solid #213f68;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.level:hover{
+    transform:translateY(-5px);
+
+    border-color:#00ffff;
+
+    box-shadow:
+    0 0 25px #00ffff33;
+}
+
+.level.locked{
+    opacity:.35;
+    cursor:not-allowed;
+}
+
+.levelNumber{
+    color:#00ffff;
+    font-size:11px;
+    letter-spacing:2px;
+}
+
+.levelIcon{
+    font-size:45px;
+    margin:18px 0;
+}
+
+.levelName{
+    font-weight:bold;
+    font-size:13px;
+}
+
+.levelStatus{
+    color:#8495b2;
+    font-size:10px;
+    margin-top:10px;
+}
+
+/* BUTTON */
+
+.btn{
+    width:100%;
+
+    padding:15px;
+
+    border:0;
+
+    border-radius:30px;
+
+    color:white;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    background:
+    linear-gradient(
+        90deg,
+        #00dfff,
+        #704cff,
+        #e92de8
+    );
+
+    margin-top:15px;
+}
+
+.btn:hover{
+    transform:scale(1.02);
+}
+
+.secondary{
+    background:#0b1832;
+    border:1px solid #315078;
+}
+
+/* PROGRESS */
+
+.progress{
+    max-width:800px;
+    margin:auto;
+}
+
+.progressInfo{
+    display:flex;
+    justify-content:space-between;
+
+    color:#8495b2;
+
+    font-size:12px;
+
+    margin-bottom:7px;
+}
+
+.progressBar{
+    height:9px;
+
+    border-radius:20px;
+
+    background:#0a1630;
+
+    overflow:hidden;
+}
+
+.progressFill{
+    width:0%;
+
+    height:100%;
+
+    background:
+    linear-gradient(
+        90deg,
+        #00ffff,
+        #754cff,
+        #ff32e8
+    );
+}
+
+/* LEARN */
+
+.learnGrid{
+    max-width:1050px;
+    margin:25px auto;
+
+    display:grid;
+
+    grid-template-columns:
+    .8fr 1.2fr;
+
+    gap:20px;
+}
+
+.card{
+    padding:25px;
+
+    border-radius:24px;
+
+    border:1px solid #203d67;
+
+    background:#071127ee;
+}
+
+.signCard{
+    min-height:430px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-align:center;
+}
+
+.targetLabel{
+    color:#7d90ad;
+
+    font-size:10px;
+
+    letter-spacing:2px;
+
+    margin-bottom:15px;
+}
+
+.signEmoji{
+    width:190px;
+    height:190px;
+
+    display:grid;
+
+    place-items:center;
+
+    background:#edf3fb;
+
+    border-radius:25px;
+
+    font-size:100px;
+}
+
+.signName{
+    font-size:30px;
+
+    margin-top:20px;
+
+    letter-spacing:3px;
+}
+
+.signCategory{
+    color:#00ffff;
+
+    font-size:11px;
+
+    margin-top:7px;
+}
+
+.instructions h3{
+    color:#00ffff;
+
+    margin-bottom:15px;
+}
+
+.instructions ul{
+    list-style:none;
+}
+
+.instructions li{
+    color:#b6c4da;
+
+    padding:10px 0;
+
+    border-bottom:
+    1px solid #ffffff0d;
+
+    font-size:13px;
+}
+
+.instructions li:before{
+    content:"✓";
+
+    color:#00ffff;
+
+    margin-right:10px;
+}
+
+.example{
+    height:150px;
+
+    display:grid;
+
+    place-items:center;
+
+    margin-top:20px;
+
+    border-radius:18px;
+
+    background:#101d37;
+
+    font-size:75px;
+}
+
+/* CAMERA */
+
+.cameraLayout{
+    max-width:1150px;
+
+    margin:auto;
+
+    display:grid;
+
+    grid-template-columns:
+    1.4fr .6fr;
+
+    gap:20px;
+}
+
+.cameraBox{
+    padding:10px;
+
+    border-radius:25px;
+
+    background:#020812;
+
+    border:1px solid #00ffff;
+}
+
+.camera{
+    position:relative;
+
+    overflow:hidden;
+
+    border-radius:18px;
+
+    aspect-ratio:16/10;
+
+    background:black;
+}
+
+#video{
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    transform:scaleX(-1);
+}
+
+#canvas{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    transform:scaleX(-1);
+}
+
+.target{
+    position:absolute;
+
+    right:15px;
+    top:15px;
+
+    padding:10px 15px;
+
+    border-radius:15px;
+
+    background:#000b;
+
+    border:1px solid #714cff;
+}
+
+.target small{
+    display:block;
+
+    color:#8192ad;
+
+    font-size:9px;
+}
+
+.target strong{
+    color:#00ffff;
+}
+
+.handStatus{
+    position:absolute;
+
+    bottom:15px;
+    left:50%;
+
+    transform:translateX(-50%);
+
+    background:#000b;
+
+    padding:8px 15px;
+
+    border-radius:20px;
+
+    font-size:11px;
+
+    white-space:nowrap;
+}
+
+/* CAMERA PANEL */
+
+.panel{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:12px;
+}
+
+.info{
+    padding:18px;
+
+    border-radius:18px;
+
+    background:#08142cee;
+
+    border:1px solid #233f68;
+}
+
+.label{
+    color:#788ba9;
+
+    font-size:9px;
+
+    letter-spacing:2px;
+
+    margin-bottom:8px;
+}
+
+.detected{
+    color:#00ffff;
+
+    font-size:28px;
+
+    font-weight:bold;
+}
+
+.confidenceBar{
+    height:9px;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    background:#0b1832;
+}
+
+.confidenceFill{
+    width:0%;
+
+    height:100%;
+
+    background:
+    linear-gradient(
+        90deg,
+        #00ffff,
+        #754cff
+    );
+
+    transition:.2s;
+}
+
+.confidenceText{
+    color:#9aacbf;
+
+    font-size:11px;
+
+    margin-top:7px;
+}
+
+.feedback{
+    min-height:110px;
+
+    display:grid;
+
+    place-items:center;
+
+    text-align:center;
+
+    padding:15px;
+
+    border-radius:18px;
+
+    background:#07182a;
+
+    border:1px solid #254c67;
+}
+
+.feedbackIcon{
+    font-size:27px;
+}
+
+.feedbackText{
+    color:#c0cde0;
+
+    font-size:12px;
+}
+
+.miniGrid{
+    display:grid;
+
+    grid-template-columns:
+    1fr 1fr;
+
+    gap:10px;
+}
+
+.mini{
+    padding:15px;
+
+    text-align:center;
+
+    border-radius:15px;
+
+    background:#0b1832;
+
+    border:1px solid #253f67;
+}
+
+.mini span{
+    display:block;
+
+    color:#7c8fac;
+
+    font-size:9px;
+}
+
+.mini strong{
+    display:block;
+
+    font-size:21px;
+
+    margin-top:5px;
+}
+
+/* RESULT */
+
+.result{
+    max-width:600px;
+
+    margin:60px auto;
+
+    padding:40px;
+
+    text-align:center;
+
+    border-radius:30px;
+
+    background:#071127;
+
+    border:1px solid #714cff;
+}
+
+.resultIcon{
+    font-size:70px;
+}
+
+.result h2{
+    font-size:40px;
+
+    margin-top:10px;
+}
+
+.resultXP{
+    color:#00ffff;
+
+    font-size:50px;
+
+    font-weight:bold;
+
+    margin:15px;
+}
+
+.resultGrid{
+    display:grid;
+
+    grid-template-columns:
+    repeat(3,1fr);
+
+    gap:10px;
+}
+
+.resultStat{
+    padding:15px;
+
+    border-radius:15px;
+
+    background:#0b1832;
+}
+
+.resultStat span{
+    display:block;
+
+    color:#7e90ad;
+
+    font-size:9px;
+}
+
+.resultStat strong{
+    display:block;
+
+    margin-top:5px;
+}
+
+/* TOAST */
+
+.toast{
+    position:fixed;
+
+    top:25px;
+
+    left:50%;
+
+    transform:
+    translateX(-50%)
+    translateY(-100px);
+
+    padding:15px 25px;
+
+    border-radius:30px;
+
+    background:#101d38;
+
+    border:1px solid #00ffff;
+
+    color:white;
+
+    font-weight:bold;
+
+    z-index:9999;
+
+    transition:.4s;
+}
+
+.toast.show{
+    transform:
+    translateX(-50%)
+    translateY(0);
+}
+
+/* RESPONSIVE */
+
+@media(max-width:900px){
+
+    .levelGrid{
+        grid-template-columns:
+        repeat(2,1fr);
+    }
+
+    .learnGrid,
+    .cameraLayout{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media(max-width:550px){
+
+    header{
+        padding:15px;
+    }
+
+    .stats{
+        display:none;
+    }
+
+    .levelGrid{
+        grid-template-columns:1fr;
+    }
+
+    .resultGrid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+
+<div class="logo">
+
+<div class="logoIcon">
+✋
+</div>
+
+<div>
+
+<h1>
+SILENT SYNC
+</h1>
+
+<p>
+CONNECTING BEYOND WORDS
+</p>
+
+</div>
+
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<small>LEVEL</small>
+<strong id="headerLevel">1</strong>
+</div>
+
+<div class="stat">
+<small>SCORE</small>
+<strong id="headerScore">0</strong>
+</div>
+
+<div class="stat">
+<small>🔥 STREAK</small>
+<strong id="headerStreak">0</strong>
+</div>
+
+<div class="stat">
+<small>XP</small>
+<strong id="headerXP">0</strong>
+</div>
+
+</div>
+
+</header>
+
+
+<!-- ================= LEVEL SCREEN ================= -->
+
+<section id="levelScreen" class="screen active">
+
+<div class="title">
+
+<h2>
+SIGN QUEST 🎮
+</h2>
+
+<p>
+Choose your level and start learning signs
+</p>
+
+</div>
+
+<div id="levelGrid" class="levelGrid"></div>
+
+</section>
+
+
+<!-- ================= LEARN SCREEN ================= -->
+
+<section id="learnScreen" class="screen">
+
+<div class="title">
+
+<h2>
+LEARN THE SIGN 🧠
+</h2>
+
+<p>
+Study the target before opening the camera
+</p>
+
+</div>
+
+<div class="progress">
+
+<div class="progressInfo">
+
+<span id="levelText">
+LEVEL 1
+</span>
+
+<span id="challengeText">
+1 / 5
+</span>
+
+</div>
+
+<div class="progressBar">
+
+<div
+id="progressFill"
+class="progressFill">
+</div>
+
+</div>
+
+</div>
+
+
+<div class="learnGrid">
+
+
+<div class="card signCard">
+
+<div class="targetLabel">
+TARGET SIGN
+</div>
+
+<div
+id="signEmoji"
+class="signEmoji">
+👋
+</div>
+
+<div
+id="signName"
+class="signName">
+HELLO
+</div>
+
+<div
+id="signCategory"
+class="signCategory">
+GREETING
+</div>
+
+</div>
+
+
+<div class="card instructions">
+
+<h3>
+✦ HOW TO SIGN
+</h3>
+
+<ul id="instructionList"></ul>
+
+<div
+id="example"
+class="example">
+👋
+</div>
+
+<button
+class="btn"
+onclick="openCamera()">
+
+📷 START CAMERA →
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= CAMERA SCREEN ================= -->
+
+<section id="cameraScreen" class="screen">
+
+<div class="title">
+
+<h2>
+AI SIGN RECOGNITION 🤖
+</h2>
+
+<p>
+Show the sign clearly to the camera
+</p>
+
+</div>
+
+
+<div class="cameraLayout">
+
+
+<div class="cameraBox">
+
+<div class="camera">
+
+<video
+id="video"
+autoplay
+muted
+playsinline>
+</video>
+
+<canvas id="canvas"></canvas>
+
+
+<div class="target">
+
+<small>
+TARGET
+</small>
+
+<strong id="cameraTarget">
+HELLO 👋
+</strong>
+
+</div>
+
+
+<div
+id="handStatus"
+class="handStatus">
+
+🖐️ Waiting for hand...
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+
+<div class="info">
+
+<div class="label">
+MODEL PREDICTION
+</div>
+
+<div
+id="detected"
+class="detected">
+
+Waiting...
+
+</div>
+
+</div>
+
+
+<div class="info">
+
+<div class="label">
+CONFIDENCE
+</div>
+
+<div class="confidenceBar">
+
+<div
+id="confidenceFill"
+class="confidenceFill">
+</div>
+
+</div>
+
+<div
+id="confidenceText"
+class="confidenceText">
+
+0% confidence
+
+</div>
+
+</div>
+
+
+<div class="feedback">
+
+<div
+id="feedbackIcon"
+class="feedbackIcon">
+
+🖐️
+
+</div>
+
+<div
+id="feedbackText"
+class="feedbackText">
+
+Waiting for ML prediction...
+
+</div>
+
+</div>
+
+
+<div class="miniGrid">
+
+<div class="mini">
+
+<span>
+SCORE
+</span>
+
+<strong id="cameraScore">
+0
+</strong>
+
+</div>
+
+<div class="mini">
+
+<span>
+STREAK
+</span>
+
+<strong id="cameraStreak">
+🔥 0
+</strong>
+
+</div>
+
+</div>
+
+
+<button
+class="btn secondary"
+onclick="retry()">
+
+🔄 TRY AGAIN
+
+</button>
+
+
+<button
+id="continueBtn"
+class="btn"
+onclick="completeChallenge()">
+
+CONTINUE →
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= RESULT ================= -->
+
+<section id="resultScreen" class="screen">
+
+<div class="result">
+
+<div class="resultIcon">
+🏆
+</div>
+
+<h2>
+NICE JOB! 🎉
+</h2>
+
+<div
+id="resultXP"
+class="resultXP">
+
++0 XP
+
+</div>
+
+
+<div class="resultGrid">
+
+<div class="resultStat">
+
+<span>
+CONFIDENCE
+</span>
+
+<strong id="resultConfidence">
+0%
+</strong>
+
+</div>
+
+
+<div class="resultStat">
+
+<span>
+SCORE
+</span>
+
+<strong id="resultScore">
+0
+</strong>
+
+</div>
+
+
+<div class="resultStat">
+
+<span>
+STREAK
+</span>
+
+<strong id="resultStreak">
+🔥 0
+</strong>
+
+</div>
+
+</div>
+
+
+<button
+class="btn"
+onclick="nextChallenge()">
+
+NEXT SIGN →
+
+</button>
+
+
+<button
+class="btn secondary"
+onclick="showLevelScreen()">
+
+LEVEL SELECT
+
+</button>
+
+</div>
+
+</section>
+
+</div>
+
+
+<div
+id="toast"
+class="toast">
+</div>
+
+
+<script>
+
+/* =====================================================
+   20 TARGET SIGNS
+===================================================== */
+
+const signs = [
+
+{
+name:"HELLO",
+emoji:"👋",
+category:"GREETING",
+points:100,
+instructions:[
+"Raise your dominant hand",
+"Keep your palm visible",
+"Move your hand gently",
+"Hold the gesture clearly"
+]
+},
+
+{
+name:"THANK YOU",
+emoji:"🙏",
+category:"COURTESY",
+points:100,
+instructions:[
+"Place your fingers near your chin",
+"Move your hand forward",
+"Keep your palm upward",
+"Move slowly"
+]
+},
+
+{
+name:"YES",
+emoji:"👍",
+category:"BASIC",
+points:100,
+instructions:[
+"Make a fist",
+"Keep your thumb extended",
+"Move slightly up and down",
+"Hold clearly"
+]
+},
+
+{
+name:"NO",
+emoji:"👎",
+category:"BASIC",
+points:100,
+instructions:[
+"Raise your hand",
+"Extend your thumb",
+"Move slightly downward",
+"Hold clearly"
+]
+},
+
+{
+name:"PLEASE",
+emoji:"🤲",
+category:"COURTESY",
+points:100,
+instructions:[
+"Place your open hand near your chest",
+"Keep your palm inward",
+"Move your hand gently",
+"Hold briefly"
+]
+},
+
+{
+name:"SORRY",
+emoji:"💔",
+category:"EMOTION",
+points:120,
+instructions:[
+"Make a fist",
+"Place it over your chest",
+"Move gently",
+"Keep relaxed"
+]
+},
+
+{
+name:"HELP",
+emoji:"🆘",
+category:"EMERGENCY",
+points:150,
+instructions:[
+"Place one hand over the other",
+"Keep both hands visible",
+"Raise the lower hand",
+"Hold the position"
+]
+},
+
+{
+name:"GOOD",
+emoji:"👌",
+category:"BASIC",
+points:100,
+instructions:[
+"Start near your mouth",
+"Move your hand downward",
+"Keep your palm upward",
+"Finish smoothly"
+]
+},
+
+{
+name:"BAD",
+emoji:"👎",
+category:"BASIC",
+points:100,
+instructions:[
+"Start near your mouth",
+"Move downward",
+"Turn your palm away",
+"Hold clearly"
+]
+},
+
+{
+name:"LOVE",
+emoji:"❤️",
+category:"EMOTION",
+points:120,
+instructions:[
+"Cross your arms over your chest",
+"Keep both hands visible",
+"Hold the position",
+"Stay relaxed"
+]
+},
+
+{
+name:"FRIEND",
+emoji:"🤝",
+category:"PEOPLE",
+points:120,
+instructions:[
+"Extend both index fingers",
+"Hook the fingers together",
+"Keep both hands visible",
+"Hold the gesture"
+]
+},
+
+{
+name:"FAMILY",
+emoji:"👨‍👩‍👧",
+category:"PEOPLE",
+points:120,
+instructions:[
+"Use both hands",
+"Move them together",
+"Keep them at chest level",
+"Hold briefly"
+]
+},
+
+{
+name:"WATER",
+emoji:"💧",
+category:"EVERYDAY",
+points:100,
+instructions:[
+"Form the required hand shape",
+"Bring your hand near your mouth",
+"Keep fingers visible",
+"Hold briefly"
+]
+},
+
+{
+name:"BURGER",
+emoji:"🍔",
+category:"FOOD",
+points:130,
+instructions:[
+"Use the hand movement taught",
+"Keep your hand in camera view",
+"Perform the movement slowly",
+"Hold the final position"
+]
+},
+
+{
+name:"BOOK",
+emoji:"📖",
+category:"OBJECT",
+points:110,
+instructions:[
+"Place both hands together",
+"Keep palms upward",
+"Open your hands",
+"Hold like an open book"
+]
+},
+
+{
+name:"CAR",
+emoji:"🚗",
+category:"TRANSPORT",
+points:110,
+instructions:[
+"Use the taught steering movement",
+"Keep both hands visible",
+"Move smoothly",
+"Hold the position"
+]
+},
+
+{
+name:"HOME",
+emoji:"🏠",
+category:"PLACE",
+points:110,
+instructions:[
+"Bring your hand near your face",
+"Move toward your cheek",
+"Move across smoothly",
+"Hold briefly"
+]
+},
+
+{
+name:"SCHOOL",
+emoji:"🏫",
+category:"PLACE",
+points:120,
+instructions:[
+"Place both hands in front",
+"Perform the taught movement",
+"Keep both hands visible",
+"Hold briefly"
+]
+},
+
+{
+name:"PHONE",
+emoji:"📱",
+category:"OBJECT",
+points:110,
+instructions:[
+"Shape your hand like a phone",
+"Place it near your ear",
+"Keep thumb and little finger visible",
+"Hold the position"
+]
+},
+
+{
+name:"DOCTOR",
+emoji:"🧑‍⚕️",
+category:"PEOPLE",
+points:150,
+instructions:[
+"Make the taught hand shape",
+"Place it near the opposite wrist",
+"Keep both hands visible",
+"Hold the position"
+]
+}
+
+];
+
+
+/* =====================================================
+   LEVELS
+===================================================== */
+
+const levels = [
+
+{
+id:1,
+name:"SIGN BEGINNER",
+icon:"🌱",
+required:0
+},
+
+{
+id:2,
+name:"SPEED SIGN",
+icon:"⚡",
+required:300
+},
+
+{
+id:3,
+name:"SIGN THINKER",
+icon:"🧠",
+required:700
+},
+
+{
+id:4,
+name:"REAL WORLD",
+icon:"🌎",
+required:1200
+},
+
+{
+id:5,
+name:"SIGN MASTER",
+icon:"👑",
+required:2000
+}
+
+];
+
+
+/* =====================================================
+   GAME STATE
+===================================================== */
+
+const game = {
+
+level:1,
+
+challenge:1,
+
+score:0,
+
+xp:0,
+
+streak:0,
+
+currentSign:null,
+
+challengeCompleted:false,
+
+lastPrediction:null,
+
+lastConfidence:0
+
+};
+
+
+let stream=null;
+
+let hands=null;
+
+let camera=null;
+
+let mediaPipeStarted=false;
+
+
+/* =====================================================
+   AUDIO SYSTEM
+===================================================== */
+
+let audioContext=null;
+
+
+/*
+   This is called automatically when
+   START CAMERA is clicked.
+*/
+
+function initAudio(){
+
+    if(!audioContext){
+
+        audioContext =
+        new(
+            window.AudioContext ||
+            window.webkitAudioContext
+        )();
+
+    }
+
+    if(audioContext.state==="suspended"){
+
+        audioContext.resume();
+
+    }
+
+}
+
+
+/* SOUND GENERATOR */
+
+function tone(
+    frequency,
+    duration,
+    type="sine",
+    volume=.18,
+    delay=0
+){
+
+    initAudio();
+
+    const oscillator =
+    audioContext.createOscillator();
+
+    const gain =
+    audioContext.createGain();
+
+    const time =
+    audioContext.currentTime + delay;
+
+
+    oscillator.type=type;
+
+    oscillator.frequency
+    .setValueAtTime(
+        frequency,
+        time
+    );
+
+
+    gain.gain
+    .setValueAtTime(
+        .001,
+        time
+    );
+
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        volume,
+        time+.02
+    );
+
+
+    gain.gain
+    .exponentialRampToValueAtTime(
+        .001,
+        time+duration
+    );
+
+
+    oscillator.connect(gain);
+
+    gain.connect(
+        audioContext.destination
+    );
+
+
+    oscillator.start(time);
+
+    oscillator.stop(
+        time+duration
+    );
+
+}
+
+
+/* CORRECT SOUND */
+
+function correctSound(){
+
+    initAudio();
+
+    tone(
+        523,
+        .12,
+        "sine",
+        .20,
+        0
+    );
+
+    tone(
+        659,
+        .12,
+        "sine",
+        .20,
+        .12
+    );
+
+    tone(
+        784,
+        .25,
+        "sine",
+        .20,
+        .24
+    );
+
+}
+
+
+/* FUNNY FAHHHH SOUND */
+
+function wrongSound(){
+
+    initAudio();
+
+    tone(
+        330,
+        .12,
+        "square",
+        .22,
+        0
+    );
+
+    tone(
+        220,
+        .14,
+        "sawtooth",
+        .22,
+        .12
+    );
+
+    tone(
+        140,
+        .35,
+        "sawtooth",
+        .18,
+        .26
+    );
+
+}
+
+
+/* STREAK SOUND */
+
+function streakSound(){
+
+    initAudio();
+
+    tone(
+        600,
+        .10,
+        "square",
+        .15,
+        0
+    );
+
+    tone(
+        750,
+        .10,
+        "square",
+        .15,
+        .10
+    );
+
+    tone(
+        900,
+        .20,
+        "square",
+        .18,
+        .20
+    );
+
+}
+
+
+/* LEVEL COMPLETE SOUND */
+
+function levelSound(){
+
+    initAudio();
+
+    tone(523,.12,"sine",.20,0);
+
+    tone(659,.12,"sine",.20,.12);
+
+    tone(784,.12,"sine",.20,.24);
+
+    tone(1047,.40,"sine",.22,.36);
+
+}
+
+
+/* =====================================================
+   TOAST
+===================================================== */
+
+function showToast(message){
+
+    const toast =
+    document.getElementById("toast");
+
+    toast.innerText=message;
+
+    toast.classList.add("show");
+
+
+    setTimeout(
+        ()=>{
+            toast.classList.remove("show");
+        },
+        1600
+    );
+
+}
+
+
+/* =====================================================
+   LEVEL DISPLAY
+===================================================== */
+
+function renderLevels(){
+
+    const grid =
+    document.getElementById(
+        "levelGrid"
+    );
+
+
+    grid.innerHTML="";
+
+
+    levels.forEach(level=>{
+
+        const unlocked =
+        game.score >= level.required;
+
+
+        const div =
+        document.createElement("div");
+
+
+        div.className =
+        "level"+
+        (
+            unlocked
+            ? ""
+            : " locked"
+        );
+
+
+        div.innerHTML=`
+
+            <div class="levelNumber">
+                LEVEL ${level.id}
+            </div>
+
+            <div class="levelIcon">
+                ${level.icon}
+            </div>
+
+            <div class="levelName">
+                ${level.name}
+            </div>
+
+            <div class="levelStatus">
+                ${
+                    unlocked
+                    ? "✓ UNLOCKED"
+                    : "🔒 "+level.required+" SCORE"
+                }
+            </div>
+
+        `;
+
+
+        if(unlocked){
+
+            div.onclick =
+            ()=>{
+                startLevel(level.id);
+            };
+
+        }
+
+
+        grid.appendChild(div);
+
+    });
+
+}
+
+
+/* =====================================================
+   START LEVEL
+===================================================== */
+
+function startLevel(number){
+
+    game.level=number;
+
+    game.challenge=1;
+
+    game.streak=0;
+
+
+    chooseRandomSign();
+
+    updateProgress();
+
+    updateHeader();
+
+    showScreen(
+        "learnScreen"
+    );
+
+}
+
+
+/* =====================================================
+   RANDOM SIGN
+===================================================== */
+
+function chooseRandomSign(){
+
+    const randomIndex =
+    Math.floor(
+        Math.random()*signs.length
+    );
+
+
+    game.currentSign =
+    signs[randomIndex];
+
+
+    game.challengeCompleted=false;
+
+    game.lastPrediction=null;
+
+    game.lastConfidence=0;
+
+
+    lastWrongPrediction="";
+
+    lastWrongSoundTime=0;
+
+
+    updateSign();
+
+}
+
+
+/* =====================================================
+   UPDATE SIGN
+===================================================== */
+
+function updateSign(){
+
+    const sign =
+    game.currentSign;
+
+
+    document.getElementById(
+        "signEmoji"
+    ).innerText =
+    sign.emoji;
+
+
+    document.getElementById(
+        "signName"
+    ).innerText =
+    sign.name;
+
+
+    document.getElementById(
+        "signCategory"
+    ).innerText =
+    sign.category;
+
+
+    document.getElementById(
+        "example"
+    ).innerText =
+    sign.emoji;
+
+
+    document.getElementById(
+        "cameraTarget"
+    ).innerText =
+    sign.name+" "+sign.emoji;
+
+
+    const list =
+    document.getElementById(
+        "instructionList"
+    );
+
+
+    list.innerHTML="";
+
+
+    sign.instructions
+    .forEach(instruction=>{
+
+        const li =
+        document.createElement("li");
+
+        li.innerText =
+        instruction;
+
+        list.appendChild(li);
+
+    });
+
+}
+
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+function updateProgress(){
+
+    document.getElementById(
+        "levelText"
+    ).innerText =
+    "LEVEL "+game.level;
+
+
+    document.getElementById(
+        "challengeText"
+    ).innerText =
+    game.challenge+" / 5";
+
+
+    document.getElementById(
+        "progressFill"
+    ).style.width =
+    (
+        (game.challenge-1)/5*100
+    )+"%";
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+function updateHeader(){
+
+    document.getElementById(
+        "headerLevel"
+    ).innerText =
+    game.level;
+
+
+    document.getElementById(
+        "headerScore"
+    ).innerText =
+    game.score;
+
+
+    document.getElementById(
+        "headerStreak"
+    ).innerText =
+    game.streak;
+
+
+    document.getElementById(
+        "headerXP"
+    ).innerText =
+    game.xp;
+
+}
+
+
+/* =====================================================
+   CAMERA STATS
+===================================================== */
+
+function updateCameraStats(){
+
+    document.getElementById(
+        "cameraScore"
+    ).innerText =
+    game.score;
+
+
+    document.getElementById(
+        "cameraStreak"
+    ).innerText =
+    "🔥 "+game.streak;
+
+}
+
+
+/* =====================================================
+   SCREEN
+===================================================== */
+
+function showScreen(id){
+
+    document
+    .querySelectorAll(".screen")
+    .forEach(screen=>{
+
+        screen.classList.remove(
+            "active"
+        );
+
+    });
+
+
+    document
+    .getElementById(id)
+    .classList.add("active");
+
+}
+
+
+/* =====================================================
+   OPEN CAMERA
+===================================================== */
+
+async function openCamera(){
+
+    /*
+       VERY IMPORTANT:
+
+       User clicked START CAMERA.
+
+       This unlocks browser audio.
+
+       No test sound button required.
+    */
+
+    initAudio();
+
+
+    resetRecognition();
+
+
+    showScreen(
+        "cameraScreen"
+    );
+
+
+    try{
+
+        stream =
+        await navigator
+        .mediaDevices
+        .getUserMedia({
+
+            video:{
+                width:1280,
+                height:720,
+                facingMode:"user"
+            },
+
+            audio:false
+
+        });
+
+
+        document.getElementById(
+            "video"
+        ).srcObject =
+        stream;
+
+
+        startMediaPipe();
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        alert(
+            "Camera permission denied or unavailable."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   MEDIAPIPE
+===================================================== */
+
+function startMediaPipe(){
+
+    if(mediaPipeStarted){
+
+        return;
+
+    }
+
+
+    hands =
+    new Hands({
+
+        locateFile:
+        file =>
+        "https://cdn.jsdelivr.net/npm/@mediapipe/hands/"+file
+
+    });
+
+
+    hands.setOptions({
+
+        maxNumHands:2,
+
+        modelComplexity:1,
+
+        minDetectionConfidence:.6,
+
+        minTrackingConfidence:.6
+
+    });
+
+
+    hands.onResults(
+        onHandsResults
+    );
+
+
+    const video =
+    document.getElementById(
+        "video"
+    );
+
+
+    camera =
+    new Camera(
+
+        video,
+
+        {
+
+            width:1280,
+
+            height:720,
+
+            onFrame:
+            async()=>{
+
+                await hands.send({
+                    image:video
+                });
+
+            }
+
+        }
+
+    );
+
+
+    camera.start();
+
+
+    mediaPipeStarted=true;
+
+}
+
+
+/* =====================================================
+   MEDIAPIPE RESULT
+===================================================== */
+
+function onHandsResults(results){
+
+    const video =
+    document.getElementById(
+        "video"
+    );
+
+
+    const canvas =
+    document.getElementById(
+        "canvas"
+    );
+
+
+    const ctx =
+    canvas.getContext("2d");
+
+
+    canvas.width =
+    video.videoWidth;
+
+
+    canvas.height =
+    video.videoHeight;
+
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    if(
+        results.multiHandLandmarks &&
+        results.multiHandLandmarks.length
+    ){
+
+        document.getElementById(
+            "handStatus"
+        ).innerText =
+        "✋ Hand detected";
+
+
+        results
+        .multiHandLandmarks
+        .forEach(landmarks=>{
+
+            drawConnectors(
+
+                ctx,
+
+                landmarks,
+
+                HAND_CONNECTIONS,
+
+                {
+                    color:"#00ffff",
+                    lineWidth:4
+                }
+
+            );
+
+
+            drawLandmarks(
+
+                ctx,
+
+                landmarks,
+
+                {
+                    color:"#ff32e8",
+                    lineWidth:2,
+                    radius:5
+                }
+
+            );
+
+        });
+
+    }
+
+    else{
+
+        document.getElementById(
+            "handStatus"
+        ).innerText =
+        "🖐️ Waiting for hand...";
+
+    }
+
+}
+
+
+/* =====================================================
+   ⭐ IMPORTANT ML CONNECTION ⭐
+
+   Your ML teammate should call:
+
+   receiveModelPrediction(
+       "LOVE",
+       0.94
+   );
+
+   Example:
+
+   prediction = "LOVE"
+   confidence = 94%
+
+===================================================== */
+
+function receiveModelPrediction(
+    predictedSign,
+    confidence
+){
+
+    /*
+       Ignore invalid ML data.
+    */
+
+    if(
+        !predictedSign ||
+        typeof confidence !== "number" ||
+        !game.currentSign
+    ){
+
+        return;
+
+    }
+
+
+    /*
+       Convert everything to uppercase
+       so LOVE and love are treated the same.
+    */
+
+    const prediction =
+    String(
+        predictedSign
+    )
+    .trim()
+    .toUpperCase();
+
+
+    /*
+       THIS is the target.
+
+       We compare with:
+
+       game.currentSign.name
+    */
+
+    const target =
+    String(
+        game.currentSign.name
+    )
+    .trim()
+    .toUpperCase();
+
+
+    /*
+       Support:
+
+       0.94
+
+       OR
+
+       94
+    */
+
+    const percent =
+    Math.max(
+
+        0,
+
+        Math.min(
+
+            100,
+
+            Math.round(
+                confidence <= 1
+                ? confidence*100
+                : confidence
+            )
+
+        )
+
+    );
+
+
+    game.lastPrediction =
+    prediction;
+
+
+    game.lastConfidence =
+    percent;
+
+
+    /*
+       SHOW PREDICTION
+    */
+
+    document.getElementById(
+        "detected"
+    ).innerText =
+    prediction;
+
+
+    /*
+       SHOW PERCENTAGE
+    */
+
+    document.getElementById(
+        "confidenceFill"
+    ).style.width =
+    percent+"%";
+
+
+    document.getElementById(
+        "confidenceText"
+    ).innerText =
+    percent+"% confidence";
+
+
+    /*
+       IMPORTANT:
+
+       Once correct, don't award XP
+       again for later ML frames.
+    */
+
+    if(
+        game.challengeCompleted
+    ){
+
+        return;
+
+    }
+
+
+    /*
+       ======================================
+       CORRECT
+       ======================================
+
+       Prediction MUST match target.
+
+       Confidence must be >= 80%.
+    */
+
+    if(
+        prediction === target &&
+        percent >= 80
+    ){
+
+        handleCorrect();
+
+        return;
+
+    }
+
+
+    /*
+       ======================================
+       WRONG
+       ======================================
+
+       Wrong prediction gets:
+
+       XP = 0
+
+       Score = unchanged
+
+       Streak = unchanged
+    */
+
+    if(
+        prediction !== target
+    ){
+
+        handleWrong(
+            prediction,
+            target
+        );
+
+        return;
+
+    }
+
+
+    /*
+       Correct sign but confidence
+       is too low.
+    */
+
+    document.getElementById(
+        "feedbackIcon"
+    ).innerText =
+    "⚠️";
+
+
+    document.getElementById(
+        "feedbackText"
+    ).innerText =
+    "Low confidence. Try again!";
+
+}
+
+
+/* =====================================================
+   CORRECT SIGN
+===================================================== */
+
+function handleCorrect(){
+
+    /*
+       Safety check.
+
+       Never award XP twice.
+    */
+
+    if(
+        game.challengeCompleted
+    ){
+
+        return;
+
+    }
+
+
+    /*
+       Mark completed BEFORE XP.
+
+       This prevents duplicate ML frames
+       from giving duplicate XP.
+    */
+
+    game.challengeCompleted=true;
+
+
+    game.streak++;
+
+
+    /*
+       XP calculation.
+
+       Base points + streak bonus.
+    */
+
+    const totalXP =
+    game.currentSign.points +
+    (game.streak*10);
+
+
+    game.xp += totalXP;
+
+    game.score += totalXP;
+
+
+    /*
+       AUTOMATIC SUCCESS SOUND 🔊
+    */
+
+    correctSound();
+
+
+    /*
+       3+ STREAK SOUND 🔥
+    */
+
+    if(
+        game.streak >= 3
+    ){
+
+        setTimeout(
+            streakSound,
+            350
+        );
+
+    }
+
+
+    updateHeader();
+
+    updateCameraStats();
+
+
+    document.getElementById(
+        "feedbackIcon"
+    ).innerText =
+    "🎉";
+
+
+    document.getElementById(
+        "feedbackText"
+    ).innerText =
+    "CORRECT! +"+
+    totalXP+
+    " XP 🎉";
+
+
+    document.getElementById(
+        "continueBtn"
+    ).innerText =
+    "VIEW RESULT →";
+
+
+    showToast(
+        "🎉 CORRECT! +"+
+        totalXP+
+        " XP"
+    );
+
+}
+
+
+/* =====================================================
+   WRONG SIGN
+===================================================== */
+
+let lastWrongPrediction="";
+
+let lastWrongSoundTime=0;
+
+
+function handleWrong(
+    prediction,
+    target
+){
+
+    /*
+       IMPORTANT:
+
+       We DO NOT change:
+
+       game.xp
+
+       game.score
+
+       game.streak
+    */
+
+
+    const now =
+    Date.now();
+
+
+    /*
+       ML models can send predictions
+       20-60 times per second.
+
+       Therefore don't play FAHHH
+       every frame.
+    */
+
+    if(
+
+        prediction !==
+        lastWrongPrediction
+
+        ||
+
+        now -
+        lastWrongSoundTime
+        >= 1200
+
+    ){
+
+        /*
+           AUTOMATIC FUNNY SOUND 😂
+        */
+
+        wrongSound();
+
+
+        lastWrongPrediction =
+        prediction;
+
+
+        lastWrongSoundTime =
+        now;
+
+    }
+
+
+    document.getElementById(
+        "feedbackIcon"
+    ).innerText =
+    "😂❌";
+
+
+    document.getElementById(
+        "feedbackText"
+    ).innerHTML =
+
+    "FAHHHH! Wrong sign 😂<br>"+
+    "Detected: <b>"+
+    prediction+
+    "</b><br>"+
+    "Target: <b>"+
+    target+
+    "</b><br>"+
+    "XP: <b>0</b>";
+
+}
+
+
+/* =====================================================
+   COMPLETE CHALLENGE
+===================================================== */
+
+function completeChallenge(){
+
+    /*
+       Don't continue unless
+       correct sign was detected.
+    */
+
+    if(
+        !game.challengeCompleted
+    ){
+
+        showToast(
+            "🖐️ Show the correct sign first!"
+        );
+
+        return;
+
+    }
+
+
+    const earnedXP =
+    game.currentSign.points +
+    game.streak*10;
+
+
+    document.getElementById(
+        "resultXP"
+    ).innerText =
+    "+"+
+    earnedXP+
+    " XP";
+
+
+    document.getElementById(
+        "resultConfidence"
+    ).innerText =
+    game.lastConfidence+
+    "%";
+
+
+    document.getElementById(
+        "resultScore"
+    ).innerText =
+    game.score;
+
+
+    document.getElementById(
+        "resultStreak"
+    ).innerText =
+    "🔥 "+game.streak;
+
+
+    stopCamera();
+
+
+    showScreen(
+        "resultScreen"
+    );
+
+}
+
+
+/* =====================================================
+   NEXT CHALLENGE
+===================================================== */
+
+function nextChallenge(){
+
+    /*
+       Five signs completed.
+    */
+
+    if(
+        game.challenge < 5
+    ){
+
+        game.challenge++;
+
+
+        chooseRandomSign();
+
+
+        updateProgress();
+
+
+        showScreen(
+            "learnScreen"
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+       LEVEL COMPLETE
+    */
+
+    levelSound();
+
+
+    showToast(
+        "🏆 LEVEL COMPLETE!"
+    );
+
+
+    if(
+        game.level < 5
+    ){
+
+        game.level++;
+
+        game.challenge=1;
+
+        game.streak=0;
+
+
+        chooseRandomSign();
+
+        updateProgress();
+
+        updateHeader();
+
+        renderLevels();
+
+        showScreen(
+            "learnScreen"
+        );
+
+    }
+
+    else{
+
+        alert(
+            "👑 YOU ARE A SIGN MASTER! 🎉"
+        );
+
+        showLevelScreen();
+
+    }
+
+}
+
+
+/* =====================================================
+   RETRY
+===================================================== */
+
+function retry(){
+
+    game.challengeCompleted=false;
+
+    game.lastPrediction=null;
+
+    game.lastConfidence=0;
+
+
+    lastWrongPrediction="";
+
+    lastWrongSoundTime=0;
+
+
+    resetRecognition();
+
+
+    document.getElementById(
+        "feedbackIcon"
+    ).innerText =
+    "🖐️";
+
+
+    document.getElementById(
+        "feedbackText"
+    ).innerText =
+    "Try again!";
+
+}
+
+
+/* =====================================================
+   RESET RECOGNITION
+===================================================== */
+
+function resetRecognition(){
+
+    document.getElementById(
+        "detected"
+    ).innerText =
+    "Waiting...";
+
+
+    document.getElementById(
+        "confidenceFill"
+    ).style.width =
+    "0%";
+
+
+    document.getElementById(
+        "confidenceText"
+    ).innerText =
+    "0% confidence";
+
+
+    document.getElementById(
+        "continueBtn"
+    ).innerText =
+    "CONTINUE →";
+
+
+    updateCameraStats();
+
+}
+
+
+/* =====================================================
+   STOP CAMERA
+===================================================== */
+
+function stopCamera(){
+
+    if(stream){
+
+        stream
+        .getTracks()
+        .forEach(
+            track=>{
+                track.stop();
+            }
+        );
+
+        stream=null;
+
+    }
+
+}
+
+
+/* =====================================================
+   LEVEL SELECT
+===================================================== */
+
+function showLevelScreen(){
+
+    stopCamera();
+
+    renderLevels();
+
+    showScreen(
+        "levelScreen"
+    );
+
+}
+
+
+/* =====================================================
+   START GAME
+===================================================== */
+
+renderLevels();
+
+updateHeader();
+
+</script>
+
+</body>
+</html>
